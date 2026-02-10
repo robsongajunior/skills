@@ -36,14 +36,22 @@ export const getSystemTheme = () => {
 // Pinia store
 export const useThemeStore = defineStore({
   id: 'theme',
-  state: () => ({ theme: getInitialTheme() }),
+  state: () => ({
+    theme: getInitialTheme(),
+    resolved: getInitialTheme()
+  }),
   getters: {
-    currentTheme: (state) => state.theme  // Returns 'light', 'dark', or 'system'
+    currentTheme: (state) => state.theme,
+    resolvedTheme: (state) => state.resolved
   },
   actions: {
     setTheme(theme) {
       this.theme = theme
+      this.resolved = theme === 'system' ? getSystemTheme() : theme
       localStorage.setItem('theme', theme)
+    },
+    setResolvedTheme(theme) {
+      this.resolved = theme === 'system' ? getSystemTheme() : theme
     }
   }
 })
@@ -54,6 +62,17 @@ export const useThemeStore = defineStore({
 - `'light'` - Light theme
 - `'dark'` - Dark theme  
 - `'system'` - Follow OS preference
+
+### State vs Resolved Theme
+
+The store maintains two separate values:
+
+| Property | Description | Possible Values |
+|----------|-------------|----------------|
+| `theme` | User's selected preference | `'light'`, `'dark'`, `'system'` |
+| `resolved` | Actual applied theme | `'light'`, `'dark'` |
+
+When `theme` is `'system'`, the `resolved` value reflects the current OS preference. This separation is essential for components that need the actual theme value (e.g., Monaco Editor) rather than the user preference.
 
 ### Persistence
 
@@ -85,7 +104,9 @@ const themeStore = useThemeStore()
 const theme = themeStore.currentTheme
 ```
 
-### For Monaco Editor theme
+### For Monaco Editor theme (use `resolvedTheme`)
+
+Monaco Editor and other third-party components need the actual theme, not the user preference. Use `resolvedTheme` for these cases:
 
 ```javascript
 import { useThemeStore } from '@/stores/theme'
@@ -93,9 +114,11 @@ import { computed } from 'vue'
 
 const store = useThemeStore()
 const theme = computed(() => {
-  return store.currentTheme === 'light' ? 'vs' : 'vs-dark'
+  return store.resolvedTheme === 'light' ? 'vs' : 'vs-dark'
 })
 ```
+
+**Why `resolvedTheme`?** When the user selects "System" theme, `currentTheme` returns `'system'`, which Monaco doesn't understand. `resolvedTheme` always returns `'light'` or `'dark'`, making it safe for third-party integrations.
 
 ## Setting Theme
 
@@ -133,12 +156,17 @@ import { DARK_SCHEME_QUERY, getSystemTheme } from '@/stores/theme'
 // Get current system theme
 const systemTheme = getSystemTheme() // Returns 'dark' or 'light'
 
-// Listen for OS theme changes
+// Listen for OS theme changes (done in App.vue)
 window.matchMedia(DARK_SCHEME_QUERY).addEventListener('change', (event) => {
-  const newTheme = event.matches ? 'dark' : 'light'
-  console.log('OS theme changed to:', newTheme)
+  if (currentTheme.value === 'system') {
+    themeApply(event.matches ? 'dark' : 'light')
+  }
+  // Update resolved theme so reactive components update
+  themeStore.setResolvedTheme(currentTheme.value)
 })
 ```
+
+**Important:** Always call `setResolvedTheme()` when the OS theme changes. This ensures components using `resolvedTheme` (like Monaco Editor) react to the change.
 
 ## Common Patterns
 
@@ -188,7 +216,10 @@ vi.spyOn(window, 'matchMedia').mockReturnValue({
 2. **Always use `useThemeStore`** - Don't access localStorage directly for theme
 3. **Use `storeToRefs` for reactivity** - Ensures components update when theme changes
 4. **Handle 'system' theme** - Always resolve to actual theme when applying to DOM
-5. **Test with both themes** - Ensure components look correct in both light and dark modes
+5. **Use `resolvedTheme` for third-party components** - Monaco Editor, charts, etc. need actual theme values
+6. **Call `setResolvedTheme()` on OS theme change** - Ensures reactive updates for components using `resolvedTheme`
+7. **Test with both themes** - Ensure components look correct in both light and dark modes
+8. **Test System theme** - Verify components update when OS preference changes
 
 ## Migration Guide (from account store)
 
