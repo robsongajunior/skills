@@ -7,6 +7,9 @@ description: How to create a new JSONForms custom renderer
 
 This skill describes how to create a new custom renderer for JSONForms in the Azion Console Kit.
 
+Links:
+- https://jsonforms.io/docs/tutorial/custom-renderers
+
 ## Overview
 
 JSONForms custom renderers allow you to use the existing form field components from `src/templates/form-fields-inputs/` within JSONForms schemas. Each custom renderer consists of two files:
