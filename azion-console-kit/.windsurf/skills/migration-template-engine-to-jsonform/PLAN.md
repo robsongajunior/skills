@@ -127,8 +127,8 @@ The new json using JSONForm structure data is a json object that contains the fo
         "label": "Integer number",
         "description": "ID Application",
         "placeholder": "Enter the ID for your new Application.",
-				"minimum": 1000,
-      	"maximum": 2000,
+        "minimum": 1000,
+        "maximum": 2000,
         "error": "Only numbers are allowed.",
         "instantiation_data_path": "envs.[4].value"
       },
@@ -145,26 +145,32 @@ The new json using JSONForm structure data is a json object that contains the fo
         ],
         "instantiation_data_path": "envs.[5].value"
       },
-			"select": {
-				"type": "string",
+      "select": {
+        "type": "string",
         "label": "Region",
         "description": "Select the region for deployment.",
         "placeholder": "Select a region",
-        "enum": [
-          "us-east",
-          "us-west",
-          "eu-west",
-          "ap-south"
-        ],
-        "enumLabels": [
-          "East",
-          "US West",
-          "EU West",
-          "Asia Pacific South"
+        "oneOf": [
+          {
+            "const": "us-eas",
+            "title": "East"
+          },
+          {
+            "const": "us-west",
+            "title": "US West"
+          },
+          {
+            "const": "eu-west",
+            "title": "EU West"
+          },
+          {
+            "const": "ap-south",
+            "title": "Asia Pacific South"
+          }
         ],
         "error": "Please select a valid region.",
         "instantiation_data_path": "envs.[6].value"
-			},
+      },
       "textarea": {
         "type": "string",
         "options": {
@@ -423,7 +429,6 @@ Migrated to JSONForm
   "required": ["az_name"]
 }
 ```
-
 
 ## Custom Renderes not implemented
 

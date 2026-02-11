@@ -96,35 +96,35 @@ The Template Engine uses a custom schema format with `groups` and `fields`. JSON
 
 ## Field Type Mapping
 
-| Template Engine Type | JSONForms Type | Format/Options | Notes |
-|---------------------|----------------|----------------|-------|
-| `textfield` | `string` | - | Basic text input |
-| `textfield` (password) | `string` | `format: "password"` | Password input |
-| `textfield` (multiline) | `string` | `options: { multi: true }` | Textarea |
-| `number` | `number` | - | Decimal numbers |
-| `number` (integer) | `integer` | - | Whole numbers only |
-| `select` / `dropdown` | `string` | `enum: [...]` | Static dropdown |
-| `checkbox` | `boolean` | - | Single checkbox |
-| `radio` | `string` | `enum: [...]` + custom renderer | Radio group |
-| `switch` | `boolean` | - | Toggle switch |
+| Template Engine Type    | JSONForms Type | Format/Options                  | Notes                       |
+| ----------------------- | -------------- | ------------------------------- | --------------------------- |
+| `textfield`             | `string`       | -                               | Basic text input            |
+| `textfield` (password)  | `string`       | `format: "password"`            | Password input              |
+| `textfield` (multiline) | `string`       | `options: { multi: true }`      | Textarea                    |
+| `number`                | `number`       | -                               | Decimal numbers             |
+| `number` (integer)      | `integer`      | -                               | Whole numbers only          |
+| `select` / `dropdown`   | `string`       | `oneOf: [{ const, title }]`     | Static dropdown (preferred) |
+| `checkbox`              | `boolean`      | -                               | Single checkbox             |
+| `radio`                 | `string`       | `enum: [...]` + custom renderer | Radio group                 |
+| `switch`                | `boolean`      | -                               | Toggle switch               |
 
 ## Property Mapping
 
-| Template Engine | JSONForms | Notes |
-|-----------------|-----------|-------|
-| `name` | Property key | Becomes the key in `properties` object |
-| `type` | `type` | See Field Type Mapping table |
-| `label` | `label` | Custom property for renderers |
-| `description` | `description` | Standard JSON Schema |
-| `placeholder` | `placeholder` | Custom property for renderers |
-| `info` | - | Removed (use `description`) |
-| `value` | - | Removed (use form defaults) |
-| `hidden` | - | Removed (handle in UI logic) |
-| `attrs.required` | `required` array | Move to root `required` array |
-| `attrs.maxLength` | `maxLength` | Standard JSON Schema |
-| `validators[].regex` | `pattern` | Standard JSON Schema |
-| `validators[].errorMessage` | `error` | Custom property for renderers |
-| `instantiation_data_path` | `instantiation_data_path` | Preserved as-is |
+| Template Engine             | JSONForms                 | Notes                                  |
+| --------------------------- | ------------------------- | -------------------------------------- |
+| `name`                      | Property key              | Becomes the key in `properties` object |
+| `type`                      | `type`                    | See Field Type Mapping table           |
+| `label`                     | `label`                   | Custom property for renderers          |
+| `description`               | `description`             | Standard JSON Schema                   |
+| `placeholder`               | `placeholder`             | Custom property for renderers          |
+| `info`                      | -                         | Removed (use `description`)            |
+| `value`                     | -                         | Removed (use form defaults)            |
+| `hidden`                    | -                         | Removed (handle in UI logic)           |
+| `attrs.required`            | `required` array          | Move to root `required` array          |
+| `attrs.maxLength`           | `maxLength`               | Standard JSON Schema                   |
+| `validators[].regex`        | `pattern`                 | Standard JSON Schema                   |
+| `validators[].errorMessage` | `error`                   | Custom property for renderers          |
+| `instantiation_data_path`   | `instantiation_data_path` | Preserved as-is                        |
 
 ## Step-by-Step Migration Guide
 
@@ -253,10 +253,15 @@ Collect all required fields:
   "region": {
     "type": "string",
     "label": "Region",
+    "description": "Select the region for deployment.",
     "placeholder": "Select a region",
-    "enum": ["us-east", "us-west", "eu-west"],
-    "enumLabels": ["US East", "US West", "EU West"],
-    "error": "Please select a valid region"
+    "oneOf": [
+      { "const": "us-east", "title": "US East" },
+      { "const": "us-west", "title": "US West" },
+      { "const": "eu-west", "title": "EU West" },
+      { "const": "ap-south", "title": "Asia Pacific South" }
+    ],
+    "error": "Please select a valid region."
   }
 }
 ```
@@ -269,23 +274,29 @@ Collect all required fields:
 
 ```json
 {
-  "groups": [{
-    "name": "edge",
-    "label": "Edge Function Starter Kit",
-    "fields": [{
-      "name": "az_name",
-      "type": "textfield",
-      "label": "Application Name",
-      "description": "Name of your edge application",
-      "placeholder": "Enter a name for your new Edge Application.",
-      "attrs": { "required": true, "maxLength": 100 },
-      "validators": [{
-        "regex": "^(?:[A-Za-z]+)(?:[A-Za-z0-9 _]*)$",
-        "errorMessage": "The use of accents and/or special characters is not allowed."
-      }],
-      "instantiation_data_path": "envs.[0].value"
-    }]
-  }]
+  "groups": [
+    {
+      "name": "edge",
+      "label": "Edge Function Starter Kit",
+      "fields": [
+        {
+          "name": "az_name",
+          "type": "textfield",
+          "label": "Application Name",
+          "description": "Name of your edge application",
+          "placeholder": "Enter a name for your new Edge Application.",
+          "attrs": { "required": true, "maxLength": 100 },
+          "validators": [
+            {
+              "regex": "^(?:[A-Za-z]+)(?:[A-Za-z0-9 _]*)$",
+              "errorMessage": "The use of accents and/or special characters is not allowed."
+            }
+          ],
+          "instantiation_data_path": "envs.[0].value"
+        }
+      ]
+    }
+  ]
 }
 ```
 
@@ -317,34 +328,38 @@ Collect all required fields:
 
 ```json
 {
-  "groups": [{
-    "name": "firewall_tor_n_bot",
-    "label": "Bot Manager and Tor Block Starter Kit",
-    "fields": [
-      {
-        "name": "az_edge_firewall_name",
-        "type": "textfield",
-        "label": "Edge Firewall Name",
-        "description": "Name of the Edge Firewall to be created",
-        "placeholder": "Enter a name for your new Edge Firewall",
-        "attrs": { "required": true, "maxLength": 255 },
-        "validators": [{
-          "regex": "(^[A-Za-z0-9\\-]{6,}$)",
-          "errorMessage": "Minimum of 6 characters. Only alphanumeric and hyphens."
-        }],
-        "instantiation_data_path": "envs.[0].value"
-      },
-      {
-        "name": "az_edge_firewall_domains",
-        "type": "textfield",
-        "label": "Domain ID(s)",
-        "description": "Enter the IDs of the domains you want to protect.",
-        "placeholder": "Separate multiple numbers using commas",
-        "attrs": { "required": false, "maxLength": 255 },
-        "instantiation_data_path": "envs.[1].value"
-      }
-    ]
-  }]
+  "groups": [
+    {
+      "name": "firewall_tor_n_bot",
+      "label": "Bot Manager and Tor Block Starter Kit",
+      "fields": [
+        {
+          "name": "az_edge_firewall_name",
+          "type": "textfield",
+          "label": "Edge Firewall Name",
+          "description": "Name of the Edge Firewall to be created",
+          "placeholder": "Enter a name for your new Edge Firewall",
+          "attrs": { "required": true, "maxLength": 255 },
+          "validators": [
+            {
+              "regex": "(^[A-Za-z0-9\\-]{6,}$)",
+              "errorMessage": "Minimum of 6 characters. Only alphanumeric and hyphens."
+            }
+          ],
+          "instantiation_data_path": "envs.[0].value"
+        },
+        {
+          "name": "az_edge_firewall_domains",
+          "type": "textfield",
+          "label": "Domain ID(s)",
+          "description": "Enter the IDs of the domains you want to protect.",
+          "placeholder": "Separate multiple numbers using commas",
+          "attrs": { "required": false, "maxLength": 255 },
+          "instantiation_data_path": "envs.[1].value"
+        }
+      ]
+    }
+  ]
 }
 ```
 
@@ -388,31 +403,37 @@ Collect all required fields:
     {
       "name": "gh_connection",
       "label": "GitHub Connection",
-      "fields": [{
-        "name": "platform_feature__vcs_integration__uuid",
-        "type": "textfield",
-        "label": "Git Scope",
-        "description": "Select the scope for this template.",
-        "attrs": { "required": true, "maxLength": 100 },
-        "instantiation_data_path": ""
-      }]
+      "fields": [
+        {
+          "name": "platform_feature__vcs_integration__uuid",
+          "type": "textfield",
+          "label": "Git Scope",
+          "description": "Select the scope for this template.",
+          "attrs": { "required": true, "maxLength": 100 },
+          "instantiation_data_path": ""
+        }
+      ]
     },
     {
       "name": "astro",
       "label": "Astro Boilerplate",
-      "fields": [{
-        "name": "az_name",
-        "type": "textfield",
-        "label": "Application Name",
-        "description": "Give a unique and easy-to-remember name.",
-        "placeholder": "Enter a name for your new Edge Application.",
-        "attrs": { "required": true, "maxLength": 100 },
-        "validators": [{
-          "regex": "(^[A-Za-z0-9\\-]{6,}$)",
-          "errorMessage": "Minimum of 6 characters. Only alphanumeric and hyphens."
-        }],
-        "instantiation_data_path": "envs.[0].value"
-      }]
+      "fields": [
+        {
+          "name": "az_name",
+          "type": "textfield",
+          "label": "Application Name",
+          "description": "Give a unique and easy-to-remember name.",
+          "placeholder": "Enter a name for your new Edge Application.",
+          "attrs": { "required": true, "maxLength": 100 },
+          "validators": [
+            {
+              "regex": "(^[A-Za-z0-9\\-]{6,}$)",
+              "errorMessage": "Minimum of 6 characters. Only alphanumeric and hyphens."
+            }
+          ],
+          "instantiation_data_path": "envs.[0].value"
+        }
+      ]
     }
   ]
 }
@@ -450,49 +471,56 @@ Collect all required fields:
 
 ## Number Field Options
 
-| Property | Type | Description |
-|----------|------|-------------|
+| Property      | Type      | Description                                        |
+| ------------- | --------- | -------------------------------------------------- |
 | `showButtons` | `boolean` | Show increment/decrement buttons (default: `true`) |
-| `useGrouping` | `boolean` | Use thousand separators (default: `true`) |
-| `minimum` | `number` | Minimum allowed value |
-| `maximum` | `number` | Maximum allowed value |
-| `multipleOf` | `number` | Step value for increment/decrement |
+| `useGrouping` | `boolean` | Use thousand separators (default: `true`)          |
+| `minimum`     | `number`  | Minimum allowed value                              |
+| `maximum`     | `number`  | Maximum allowed value                              |
+| `multipleOf`  | `number`  | Step value for increment/decrement                 |
 
 ## Custom Renderers Required
 
 The following custom renderers need to be created to support all Template Engine field types. See the `create-jsonform-custom-render` skill for implementation details.
 
-| Renderer | Status | Tester Condition |
-|----------|--------|------------------|
-| Input Text | ✅ Implemented | `isStringControl` |
-| Input Number | ✅ Implemented | `isNumberControl \|\| isIntegerControl` |
+| Renderer       | Status         | Tester Condition                           |
+| -------------- | -------------- | ------------------------------------------ |
+| Input Text     | ✅ Implemented | `isStringControl`                          |
+| Input Number   | ✅ Implemented | `isNumberControl \|\| isIntegerControl`    |
 | Input Password | ✅ Implemented | `isStringControl && format === 'password'` |
-| Textarea | ✅ Implemented | `isStringControl && options.multi` |
-| Dropdown | ✅ Implemented | `isEnumControl` |
-| Dynamic Select | ❌ Pending | Custom schema property |
-| Checkbox | ❌ Pending | `isBooleanControl` |
-| Radio Group | ❌ Pending | Custom schema property |
-| Switch Toggle | ❌ Pending | `isBooleanControl` + custom property |
+| Textarea       | ✅ Implemented | `isStringControl && options.multi`         |
+| Dropdown       | ✅ Implemented | `isEnumControl`                            |
+| Dynamic Select | ❌ Pending     | Custom schema property                     |
+| Checkbox       | ❌ Pending     | `isBooleanControl`                         |
+| Radio Group    | ❌ Pending     | Custom schema property                     |
+| Switch Toggle  | ❌ Pending     | `isBooleanControl` + custom property       |
 
 ## Best Practices
 
 ### 1. Preserve Field Names
+
 Keep the original `name` values as property keys to maintain compatibility with `instantiation_data_path`.
 
 ### 2. Use Standard JSON Schema Properties
+
 Prefer standard properties (`maxLength`, `pattern`, `minimum`, `maximum`) over custom ones.
 
 ### 3. Custom Properties for UI
+
 Use custom properties (`label`, `placeholder`, `error`, `showButtons`) for UI-specific behavior.
 
 ### 4. Required Array at Root
+
 Always define required fields in the root `required` array, not inline.
 
 ### 5. Consistent Error Messages
+
 Always provide an `error` property when using `pattern` for user-friendly validation messages.
 
 ### 6. Test Migrations
+
 After migration, test:
+
 - All fields render correctly
 - Validation works as expected
 - Form submission includes all data
